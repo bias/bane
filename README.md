@@ -1,19 +1,20 @@
 # Biologically motivated Artificial Neural Environment 
 
-This is a prototype for an artificial neural network environment using Erlang. It will be strongly biologically motivated. 
+This is a prototype for an artificial neural environment using Erlang. It will be strongly biologically motivated. 
 
 Some tennants
 
-1. Always be distributed/parallel/concurrent
-2. Always be biological
-3. Always think "can we see the forest and the trees"
-4. Don't be evil.
+1. be distributed/parallel/concurrent
+2. be biological
+3. think "can we see the forest and the trees"
+
+![A picture of a forest is supposed to be here][forestandtree]
 
 [The project is hosted at github][gitsite]
 
 * * *
 
-Beware all ye who skip this quote; it is cool.
+**Beware** all ye who skip this quote; it's *cool*.
 
 > For one thing, Butler is not content to say that machines extend the organism, but 
 > asserts that they are really limbs and organs lying on the body without organs of a 
@@ -24,7 +25,7 @@ Beware all ye who skip this quote; it is cool.
 > machines, each relating to the others, engendered in combination with the others. [...] 
 > He shatters the vitalist argument by calling in question the specific or personal unity 
 > of the organism, and the mechanist argument even more decisively, by calling in question 
-> the structural unity of the machine.
+> the structural unity of the machine.  
 > - Deleuze and Guattari, Anti-Œdipus
 
 # Getting Started
@@ -46,10 +47,14 @@ To use a given example you'll first need to understand the example (I'm serious)
 
 With Erlang installed (in a Unixish system). We'll run a simple integrate and fire model.
 
+Navigate to the code's directory and open the Erlang VM.
+
 ```bash
 	$ cd bane/if
 	$ erl
 ```
+
+Compile and run the example then check for recieved messages.
 
 ```erlang
     Erlang R14B01 (erts-5.8.2) [source] [64-bit] [smp:2:2] [rq:2] [async-threads:0] [hipe] [kernel-poll:false]
@@ -81,4 +86,5 @@ That's it. We flushed the messages we recieved (at the shell process) and notice
 	* Create library dir
 * Workup an interface for I/O
 
+[forestandtree]: http://en.wikipedia.org/wiki/File:09272008_BrightonUT.JPG "Wiki Brighton UT" 
 [gitsite]: github.com/bias/bane "github"
