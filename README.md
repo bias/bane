@@ -3,6 +3,7 @@
 This is a prototype for an artificial neural network environment using Erlang. It will be strongly biologically motivated. 
 
 Some tennants
+
 1. Always be distributed/parallel/concurrent
 2. Always be biological
 3. Always think "can we see the forest and the trees"
