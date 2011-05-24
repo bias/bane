@@ -8,7 +8,7 @@ Some tennants
 
 1. be distributed/parallel/concurrent
 2. be biological
-3. think "can we see the forest and the trees"
+3. see the forest and the trees
 
 * * *
 
@@ -60,7 +60,7 @@ With Erlang installed (in a Unixish system). We'll run a simple integrate and fi
 Navigate to the code's directory and open the Erlang VM.
 
 ```bash
-	$ cd bane/if
+	$ cd bane/examples
 	$ erl
 ```
 
@@ -92,8 +92,7 @@ That's it. We flushed the messages we recieved (at the shell process) and notice
 * Wrap this in Autotools
     * Figure out the correct way to install erlang libs (hmm)
 * Extract common network libs from examples
-    * Create example dir
-	* Create library dir
+    * seperate examples from library from utilities? 
 * Workup an interface for I/O
 
 [forestandtree]: http://upload.wikimedia.org/wikipedia/commons/4/47/Tapeten-a1.jpg "Tree tapestry" 
