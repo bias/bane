@@ -2,19 +2,22 @@
 
 This is a prototype for an artificial neural environment using Erlang. It will be strongly biologically motivated. 
 
+[The project is hosted at github][gitsite]
+
 Some tennants
 
 1. be distributed/parallel/concurrent
 2. be biological
 3. think "can we see the forest and the trees"
 
-![A picture of a forest is supposed to be here][forestandtree]
-
-[The project is hosted at github][gitsite]
-
 * * *
 
-**Beware** all ye who skip this quote; it's *cool*.
+*Forest and trees?*
+
+![A picture of a forest is supposed to be here][forestandtree]
+
+
+**Beware** all ye who skip this quote; it's cool.
 
 > For one thing, Butler is not content to say that machines extend the organism, but 
 > asserts that they are really limbs and organs lying on the body without organs of a 
