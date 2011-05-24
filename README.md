@@ -38,9 +38,16 @@ Some tennants
 Any erlang module (file) that has a start function should work as an example. As this gets more fleshed out I'll create an examples directory.
 
 You'll need to compile any files you will use and any files the said files depend on (get it?). With Erlang you can do this at the command line like so
+
+```bash
     $ erlc file.erl
+```
+
 which will generate the object file `file.beam`. However, since these files are currently meant to be used interactively in the Erlang VM you can just as easily compile files during your Erlang session like so
-    > c(file).
+
+```erlang
+    1> c(file).
+```
 
 ## Usage
 
@@ -78,7 +85,7 @@ Compile and run the example then check for recieved messages.
     ok
 ```
 
-That's it. We flushed the messages we recieved (at the shell process) and noticed that we recieved one every second, which makes since, because our model has a single cell recieving input at 60Hz and with a threshold of 60 units (whatever our neurotransmitter quanta is).
+That's it. We flushed the messages we recieved (at the shell process) and noticed that we recieved one every second (in the time tuple {hour, min, sec}), which makes since, because our model has a single cell recieving input at 60Hz and with a threshold of 60 units (whatever our neurotransmitter quanta is).
 
 # Big TODOs
 
