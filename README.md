@@ -53,9 +53,9 @@ which will generate the object file `file.beam`. However, since these files are 
 
 To use a given example you'll first need to understand the example (I'm serious). Then, you'll run the start function of the given example in the Erlang VM e.g. `> example_module:start_function().`.
 
-## Complete Example
+## Working Example
 
-With Erlang installed (in a Unixish system). We'll run a simple integrate and fire model.
+With Erlang installed (in a Unixish system), we'll run a simple integrate and fire model.
 
 Navigate to the code's directory and open the Erlang VM.
 
