@@ -14,8 +14,11 @@ Some tennants
 
 *Forest and trees?*
 
-![A picture of a forest is supposed to be here][forestandtree]
+![A tapestry of a tree][forestandtree]
 
+Or, maybe this?
+
+![A picture of the retina][retina]
 
 **Beware** all ye who skip this quote; it's cool.
 
@@ -95,5 +98,6 @@ That's it. We flushed the messages we recieved (at the shell process) and notice
     * seperate examples from library from utilities? 
 * Workup an interface for I/O
 
-[forestandtree]: http://upload.wikimedia.org/wikipedia/commons/4/47/Tapeten-a1.jpg "Tree tapestry" 
 [gitsite]: github.com/bias/bane "github"
+[forestandtree]: http://upload.wikimedia.org/wikipedia/commons/4/47/Tapeten-a1.jpg "Tree tapestry" 
+[forestandtree]: http://upload.wikimedia.org/wikipedia/commons/2/21/Fig_retine.png "Retina image" 

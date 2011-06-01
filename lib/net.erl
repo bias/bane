@@ -28,4 +28,3 @@ cell(Neighbors, Connections, State) ->
 			cell(Neighbors, Connections, State);
 		stop -> ok
 	end.
-	% posthook, act on state
