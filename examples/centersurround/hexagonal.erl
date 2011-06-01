@@ -135,8 +135,6 @@ neuron(Nbh, PN, PNOP, P, CPID) ->
 	end.
 
 merge([], L2) -> L2;
-merge([null], L2) -> L2;
-merge([null,null], L2) -> L2;
 
 merge([Head|Tail], L2) ->
 	case lists:member(Head, L2) of
