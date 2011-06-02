@@ -1,7 +1,7 @@
 -module(hexagonal).
 -export([start/1, stop/0, tofile/1, info/0]).
 -export([mathplot/1, father/1, mother_cell/1, cell/5]).
--vsn(0.0).
+-vsn(0.1).
 
 %%
 %% Client interface
