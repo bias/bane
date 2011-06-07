@@ -3,11 +3,12 @@
 #include <cv.h>
 #include <highgui.h>
 
-// erlang libs
+/* erlang libs */
 #include <erl_interface.h>
 #include <ei.h>
 
-int main( int argc, char **argv ) {
+/* int main( int argc, char **argv ) { */
+int main() {
 	CvCapture *capture = 0;
 	IplImage  *frame = 0;
 	int       key = 0;

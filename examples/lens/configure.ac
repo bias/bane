@@ -1,4 +1,4 @@
-AC_INIT([webcam], [0.1])
+AC_INIT([io], [0.1])
 
 #AC_PREREQ(2.59c)
 
@@ -11,8 +11,12 @@ AM_INIT_AUTOMAKE
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
+#
+# Opencv
+
 PKG_CHECK_MODULES([OPENCV], [opencv >= 2.0.0])
 
+#
 # Erlang stuff
 
 # Basic setup
