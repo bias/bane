@@ -47,3 +47,15 @@ fire(_Count, LPID, Thresh, Type, Fun) when _Count > Thresh ->
 	Fun(LPID, Thresh, Type, 0);
 fire(Count, LPID, Thresh, Type, Fun) ->
 	Fun(LPID, Thresh, Type, max(Count,0)).
+
+test(Pid, Threshold, Count) ->
+	receive
+		{hi, _Time} ->
+			case Count > Threshold of
+				true -> 
+					Pid ! hi,
+					test(Pid, Threshold, 0);
+				false -> 
+					test(Pid, Threshold, Count+1)
+			end
+	end.
