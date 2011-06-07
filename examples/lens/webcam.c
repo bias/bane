@@ -1,7 +1,11 @@
 #include <stdio.h>
 
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <cv.h>
+#include <highgui.h>
+
+// erlang libs
+#include <erl_interface.h>
+#include <ei.h>
 
 int main( int argc, char **argv ) {
 	CvCapture *capture = 0;
@@ -23,13 +27,10 @@ int main( int argc, char **argv ) {
 	while( key != 'q' ) {
 		/* get a frame */
 		frame = cvQueryFrame( capture );
-
 		/* always check */
 		if( !frame ) break;
-
 		/* display current frame */
 		cvShowImage( "result", frame );
-
 		/* exit if user press 'q' */
 		key = cvWaitKey( 1 );
 	}

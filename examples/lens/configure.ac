@@ -1,13 +1,36 @@
 AC_INIT([webcam], [0.1])
 
+#AC_PREREQ(2.59c)
+
 AC_CONFIG_AUX_DIR([.])
+#AC_CONFIG_MACRO_DIR([m4])
 
 AM_INIT_AUTOMAKE
+#LT_INIT
 
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
 PKG_CHECK_MODULES([OPENCV], [opencv >= 2.0.0])
+
+# Erlang stuff
+
+# Basic setup
+AC_ERLANG_PATH_ERL
+AC_ERLANG_PATH_ERLC
+
+# Release setup
+AC_ERLANG_SUBST_ROOT_DIR
+AC_ERLANG_SUBST_ERTS_VER
+AC_ERLANG_SUBST_LIB_DIR
+#AC_ERLANG_SUBST_RELEASE_VER
+#AC_CONFIG_FILES([app/erbot.app app/erbot.rel])
+
+# Grab library/include info for erl_interface
+AC_ERLANG_CHECK_LIB(erl_interface)
+##AC_ERLANG_SUBST_INSTALL_LIB_SUBDIR(AC_PACKAGE_TARNAME, AC_PACKAGE_VERSION)
+#erlcflags="-Wall"
+#AC_SUBST([ERLCFLAGS], [$erlcflags])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile])
