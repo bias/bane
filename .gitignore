@@ -1,1 +1,59 @@
+#
+# Erlang
 *.beam
+
+#
+# Randoms
+*.log
+
+#
+# C language
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+#
+# autotools
+
+compile
+depcomp
+install-sh
+missing
+
+# aclocal
+aclocal.m4
+
+# automake
+Makefile
+Makefile.in
+
+# configure
+configure
+config.log
+config.status
+config.sub
+config.guess
+
+# m4
+m4
+autom4te.cache
+
+# libtool
+.deps
+.libs
+libtool
+ltmain.sh
+
+# autoheader
+config.h*
+stamp-h*
