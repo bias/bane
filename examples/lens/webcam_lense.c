@@ -39,7 +39,7 @@ int main( int argc, char **argv ) {
 	int got;                                 /* Result of receive */
 	unsigned char buf[BUFSIZ];               /* Buffer for incoming message */
 	ErlMessage emsg;                         /* Incoming message */
-	ETERM *pid;
+	ETERM *pid, *msg;
 	int family;
 
 	ETERM **families;
@@ -109,46 +109,32 @@ int main( int argc, char **argv ) {
 	if ((fd = erl_xconnect( &conn_iaddr, conn_nodename )) < 0)
 		erl_err_quit("erl_connect");
 
-	/* ***** *** * GRAB NUMBER OF RINGS * *** ***** */
-	/* XXX construct 6 by n array of eterm pointers */
-	/* erl_reg_send(fd, "father", msg) */ 
-	while (loop) {
-		got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
-		if (got == ERL_TICK) {
-			/* ignore */
-		} else if (got == ERL_ERROR) {
-			loop = 0; /* exit while loop */
-		} else {
-			if (emsg.type == ERL_REG_SEND && strcmp(ERL_ATOM_PTR(erl_element(1, emsg.msg)), "XXXheader") == 0 ) {
-				/* FIXME grab it */
-				/* erl_element(2, emsg.msg) */
-				/* graph order should be 1+6(n(n+1)/2) */
-				/* family size should be n(n+1)/2 */
-				loop = 0;
-			}
-			erl_free_term(emsg.msg);
-		}
-	}
-
 	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
+	/* TODO construct message */
+		
+	/* XXX send message to get process data */
+	msg = erl_format((char*)"{p_query, {any, ~s}}]", self_fullname);
+	erl_reg_send(fd, "father", msg);
+
+	/* XXX receive messages to get process data */
 	/* XXX populate 6 by n array of eterm pointers */
-	/* erl_reg_send(fd, "father", msg) */ 
+	/*
 	while (loop) {
 		got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
 		if (got == ERL_TICK) {
-			/* ignore */
 		} else if (got == ERL_ERROR) {
-			loop = 0; /* exit while loop */
+			loop = 0;
 		} else {
 			if (emsg.type == ERL_REG_SEND) {
-				/* message will be 2 tuple {F, Pid} */
+				// message will be 2 tuple {F, Pid}
 				family = erl_element(1, emsg.msg);
 				pid = erl_element(2, emsg.msg);
-				/* erl_free_term(family); */
+				// erl_free_term(family);
 			}
 			erl_free_term(emsg.msg);
 		}
 	}
+	*/
 
 	/* ***** *** *	LOOP	* *** ***** */ 
 	loop = 1;

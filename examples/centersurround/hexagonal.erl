@@ -31,8 +31,10 @@ father(FamilyList) ->
 	receive
 		{p_data, Pdatatup} -> 
 			father([Pdatatup|FamilyList]);
-		{p_query, RPid} -> 
-			[ RPid ! {p_response, Pdatatup} || Pdatatup <- FamilyList ],
+		{p_query, _Name} -> 
+			[ Name ! {p_response, Pdatatup} || Pdatatup <- FamilyList ],
+			% FIXME something like this
+			Name ! stop,
 			father(FamilyList);
 		{size_q, RPid} -> 
 			RPid ! {size_r, length(FamilyList)}, 
