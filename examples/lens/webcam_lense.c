@@ -15,12 +15,29 @@
 #include <erl_interface.h>
 #include <ei.h>
 
-int main( int argc, char **argv ) {
+
+#define PI 3.1415926535
+
+typedef struct Hex {
+	double x;
+	double y;
+	double ang;
+	double step;
+} Hex;
+
+int spiral_hex_map(CvPoint *[], int, Hex *, int count);
+uchar pixel_map(IplImage *, CvPoint *, int);
+
+int main(int argc, char **argv) {
 
 	/* ***** *** * OPENCV DEFINES * *** ***** */ 
 	CvCapture *capture;
 	IplImage  *img;
 	int key = 0;
+	int channels = 3;
+	Hex hex;
+	CvPoint center;
+
 
 	/* ***** *** * ERLANG DEFINES * *** ***** */ 
 	char *self_addr;
@@ -38,14 +55,15 @@ int main( int argc, char **argv ) {
 	int loop = 1;	                         /* Loop flag */
 	int got;                                 /* Result of receive */
 	unsigned char buf[BUFSIZ];               /* Buffer for incoming message */
-	ErlMessage emsg;                         /* Incoming message */
-	ETERM *pid, *msg;
-	int family;
 
-	ETERM **families;
+	ErlMessage emsg;                         /* Incoming message */
+	ETERM *erequest, *earg, *ehead, *egraph_order, *epid, *efam, *egen;
+	ETERM **families[6], *mother, *photons[256]; 
+	int graph_order = 0;
+
 
 	/* ***** *** * GENERAL DEFINES * *** ***** */
-	int x,y;
+	int i,j,x,y;
 
 	#define SELF_ADDR argv[1]
 	#define SELF_HOSTNAME argv[2]
@@ -75,11 +93,21 @@ int main( int argc, char **argv ) {
 	cvNamedWindow( "result", CV_WINDOW_AUTOSIZE );
 
 
-	/* check image for 3 channels */
-	if( !(img = cvQueryFrame( capture )) || img->nChannels != 3) {
+	/* check image for 3 channels, and get dimensions */
+	if( !(img = cvQueryFrame( capture )) ) {
 		fprintf(stderr, "Expected 3 channel camera");
 		return 1;
 	}
+	else if ( img->nChannels != 3 ) {
+		fprintf(stderr, "Expected 3 channel camera");
+		return 1;
+	} 
+	else {
+		fprintf(stdout, "image h,w: %i, %i\n", img->height, img->width);
+		center.x = round(img->width/2);
+		center.y = round(img->height/2);
+	}
+
 
 	/* ***** *** * ERLANG SETUP * *** ***** */ 
 
@@ -109,58 +137,85 @@ int main( int argc, char **argv ) {
 	if ((fd = erl_xconnect( &conn_iaddr, conn_nodename )) < 0)
 		erl_err_quit("erl_connect");
 
-	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
-	/* TODO construct message */
-		
-	/* XXX send message to get process data */
-	msg = erl_format((char*)"{p_query, {any, ~s}}]", self_fullname);
-	erl_reg_send(fd, "father", msg);
+	for (i=0; i<256; i++)
+		photons[i] = erl_format((char*)"{photons,~i}", (uchar)i);
 
-	/* XXX receive messages to get process data */
-	/* XXX populate 6 by n array of eterm pointers */
-	/*
+	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
+		
+	erequest= erl_format((char*)"{p_q, {any, ~a}}", self_fullname);
+	erl_reg_send(fd, "father", erequest);
+	erl_free_term(erequest);
+
 	while (loop) {
 		got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
-		if (got == ERL_TICK) {
-		} else if (got == ERL_ERROR) {
-			loop = 0;
-		} else {
+		if (got == ERL_TICK) { /* nothing */ } 
+		else if (got == ERL_ERROR) { return 1; } 
+		else {
 			if (emsg.type == ERL_REG_SEND) {
-				// message will be 2 tuple {F, Pid}
-				family = erl_element(1, emsg.msg);
-				pid = erl_element(2, emsg.msg);
-				// erl_free_term(family);
+				ehead = erl_element(1, emsg.msg);
+				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_start") == 0 ) {
+					/* {p_r_start, Graph_order} */ 
+					egraph_order = erl_element(2, emsg.msg);
+					graph_order = ERL_INT_VALUE(egraph_order);
+					for (i=0; i<6; i++)
+						families[i] = malloc( (graph_order-1)/6 * sizeof(ETERM*) );
+					erl_free_term(egraph_order);
+				}
+				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r") == 0 ) {
+					/* {p_r, {Pid, Fam, Gen}} */
+					earg = erl_element(2, emsg.msg);
+					efam = erl_element(2, earg);
+					egen = erl_element(3, earg);
+					if ( ERL_INT_VALUE(efam) == 0 )
+						mother = erl_element(1, earg); 
+					else
+						families[ERL_INT_VALUE(efam)-1][ERL_INT_VALUE(egen)-1] = erl_element(1, earg);
+				}
+				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_stop") == 0 ) { loop = 0; }
 			}
 			erl_free_term(emsg.msg);
 		}
 	}
-	*/
+
+
+	/* XXX create map from 6 by n array to pixels (square and hexagon map) */
+	int family_order = (graph_order-1)/6;
+	CvPoint **map[6];
+	for (i=0; i<6; i++) {
+		map[i] = malloc( family_order * sizeof(CvPoint*) );
+		for (j=0; j<family_order; j++)
+			map[i][j] = malloc( sizeof(struct CvPoint) ); 
+	}
+
+	hex.step = 1;
+	for (i=0; i<6; i++) {
+		hex.ang = i*PI/3;
+		hex.x = center.x + cos(hex.ang)*hex.step;
+		map[i][0]->x = (int) (hex.x+0.5);
+		hex.y = center.y + sin(hex.ang)*hex.step;
+		map[i][0]->y = (int) (hex.y+0.5);
+		hex.ang += PI/3;
+		spiral_hex_map(map[i], family_order-1, &hex, 1);
+	}
+
 
 	/* ***** *** *	LOOP	* *** ***** */ 
+
 	loop = 1;
-	while ( loop && key != 'q' ) {
+
+	while ( loop  && key != 'q' ) {
+
 		/* get an image */
 		if( !(img = cvQueryFrame(capture)) ) 
 			break;
+
 		/* display current image */
 		cvShowImage("result", img);
 
-		/* TODO send image to erlang */
-		/* TODO send red pixels to corr pids */
-		/*
-		for(x = 0; x < img->width; x++) {
-			for(y = 0; y < img->width; y++) {
-				((uchar*)(img->imageData + img->widthStep*y))[x*3]; 
-				((uchar*)(img->imageData + img->widthStep*y))[x*3+1];
-				((uchar*)(img->imageData + img->widthStep*y))[x*3+2];
-			}
-		}
-		*/
-		/* XXX int erl_send(fd, to, msg) */
-		/* XXX 
-		args = erl_format((char*)"[data_man, {~f, ~f, ~f, ~f}]", ch.at(0), ch.at(1), ch.at(2), ch.at(3));
-		erl_rpc_to(fd, (char*)"gen_event", (char*)"notify", args);
-		*/
+		erl_send(fd, mother, photons[pixel_map(img, &center, 1)]);
+		for (i=0; i<6; i++) 
+			for (j=0; j<family_order; j++)
+				erl_send(fd, families[i][j], photons[pixel_map(img, map[i][j], 1)]);
 
 		/* exit if user presses 'q' */
 		key = cvWaitKey( 1 );
@@ -171,4 +226,26 @@ int main( int argc, char **argv ) {
 	cvReleaseCapture( &capture );
 
 	return 0;
+}
+
+
+int spiral_hex_map(CvPoint *map[], int size, Hex *hex, int count) {
+	int i;
+	for (i=0; i<count; i++) { 
+		hex->x += cos(hex->ang)*hex->step;
+		map[i]->x = (int) (hex->x+0.5);
+		hex->y += sin(hex->ang)*hex->step;
+		map[i]->y = (int) (hex->y+0.5);
+	}
+	hex->ang += PI/3;
+	if ( size-count > 0 )
+		spiral_hex_map(&map[count], size-count, hex, count+1);
+	else
+		return 0;	
+}
+
+uchar pixel_map(IplImage *img, CvPoint *p, int channel) {
+	/* XXX widthStep : size of an aligned image row, in bytes */
+	/* XXX nChannels : channel size to offset in bytes */
+	((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels]; 
 }

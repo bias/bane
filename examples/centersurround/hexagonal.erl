@@ -1,6 +1,6 @@
 -module(hexagonal).
 -export([start/1, stop/0, info/0]).
--export([father/1, mother_cell/1, cell/7]).
+-export([father/2, mother_cell/1, cell/7]).
 -vsn(0.2).
 
 %%
@@ -10,7 +10,7 @@
 start(N) ->
 	MPid = spawn_link(?MODULE, mother_cell, [trunc(N*(N-1)/2)]),
 	register(mother, MPid),
-	FPid = spawn_link(?MODULE, father, [[{MPid,0,0}]]),
+	FPid = spawn_link(?MODULE, father, [[{MPid,0,0}], N]),
 	register(father, FPid),
 	{MPid, FPid}.
 
@@ -19,32 +19,35 @@ stop() -> nope.
 info() ->
 	father ! {size_q, self()},
 	receive
-		{size_r, Size} -> ok
+		{size_r, ActualSize, Size} -> ok
 	end,
-	Size.
+	{ActualSize, Size}.
 
 %%
 %% Backend 
 %%
 
-father(FamilyList) ->
+father(FamilyList, N) ->
 	receive
-		{p_data, Pdatatup} -> 
-			father([Pdatatup|FamilyList]);
-		{p_query, _Name} -> 
-			[ Name ! {p_response, Pdatatup} || Pdatatup <- FamilyList ],
-			% FIXME something like this
-			Name ! stop,
-			father(FamilyList);
-		{size_q, RPid} -> 
-			RPid ! {size_r, length(FamilyList)}, 
-			father(FamilyList);
+		{p_d, Pdatatup} -> 
+			father([Pdatatup|FamilyList], N);
+		{p_q, RPid} -> 
+			RPid ! {p_r_start, length(FamilyList)},
+			[ RPid ! {p_r, Pdatatup} || Pdatatup <- FamilyList ],
+			RPid ! {p_r_stop},
+			father(FamilyList, N);
+		{size_q, RPid} ->
+			RPid ! {size_r, length(FamilyList), N*(N-1)*3+7},
+			father(FamilyList, N);
+		{asize_q, RPid} -> 
+			RPid ! {asize_r, length(FamilyList)}, 
+			father(FamilyList, N);
 		stop -> ok
 	end.
 
 mother_cell(N) -> 
 	PIDL = [ spawn_link(?MODULE, cell, [[self()], null, null, 0, N, Family, 1]) || Family <- lists:seq(1,6) ],
-	[ father ! {p_data, {lists:nth(F,PIDL), F, 1}} || F <- lists:seq(1,6) ], 
+	[ father ! {p_d, {lists:nth(F,PIDL), F, 1}} || F <- lists:seq(1,6) ], 
 	[ lists:nth(X, PIDL) ! {nbh, [lists:nth(rollover(X-1), PIDL), lists:nth(rollover(X+1), PIDL)]} || X <- lists:seq(1, 6) ],
 	[ lists:nth(X, PIDL) ! {pnb, lists:nth(rollover(X+1), PIDL)} || X <- lists:seq(1, 6) ],
 	neuron(PIDL, null, null, 0, null, 0, 0).
@@ -67,7 +70,7 @@ cell(Nbh, PN, PNOP=null, P=0, N, Family, Gen) ->
 
 cell(Nbh, PN, PNOP=null, P=1, N, Family, Gen) -> 
 	CPID = spawn_link(?MODULE, cell, [[self(), PN], null, PN, 0, N-1, Family, Gen+1]),
-	father ! {p_data, {CPID, Family, Gen+1}},
+	father ! {p_d, {CPID, Family, Gen+1}},
 	receive
 		{pf, PID} -> 
 			neuron(merge([PID, CPID], Nbh), PN, PNOP, P+1, CPID, Family, Gen);
@@ -104,7 +107,7 @@ cell(Nbh, PN, PNOP, P, 0, Family, Gen) -> neuron(Nbh, PN, PNOP, P, null, Family,
 
 cell(Nbh, PN, PNOP, P, N, Family, Gen) ->
 	CPID = spawn_link(?MODULE, cell, [[self(), PN], null, PN, 0, N-1, Family, Gen+1]),
-	father ! {p_data, {CPID,Family,Gen+1}},
+	father ! {p_d, {CPID,Family,Gen+1}},
 	receive
 		{pf, PID} -> 
 			neuron(merge([PID, CPID], Nbh), PN, PNOP, P+1, CPID, Family, Gen);
