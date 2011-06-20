@@ -205,6 +205,8 @@ int main(int argc, char **argv) {
 
 	while ( loop  && key != 'q' ) {
 
+		/* TODO calculate framerate */
+		
 		/* get an image */
 		if( !(img = cvQueryFrame(capture)) ) 
 			break;

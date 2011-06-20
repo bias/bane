@@ -9,8 +9,10 @@ start() ->
 	PID_B = simple:start_cell([self()], 60, inhib),
 	%% create horizontal cell (these dudes are weird)
 	PID_H = simple:start_cell([PID_B], 60*6, excite),
-	%% create signals (cones releasing glutamate - excitatory neurotransmitter)
-	LPID_S = [ simple:start_signal([PID_B], 60) ] ++  [ simple:start_signal([PID_H], 60) || _X <- lists:seq(1,6) ].
+	%% create cones 
+	LPID_C = [ simple:start_cell([PID_B], 60) ] ++  [ simple:start_cell([PID_H], 60) || _X <- lists:seq(1,6) ],
+	%% create signals
+	_LPID_S = [ simple:start_signal([lists:nth(X,LPID_C)], 60) || X <- lists:seq(1,7) ].
 
 all(LPID, NFreq) ->
 	[ P ! {freq, NFreq} || P <- LPID ].
