@@ -213,7 +213,8 @@ int main(int argc, char **argv) {
 
 		/* display current image */
 		cvShowImage("result", img);
-
+		
+		/* center of retina */
 		erl_send(fd, mother, photons[pixel_map(img, &center, 1)]);
 		for (i=0; i<6; i++) 
 			for (j=0; j<family_order; j++)
@@ -246,8 +247,11 @@ int spiral_hex_map(CvPoint *map[], int size, Hex *hex, int count) {
 		return 0;	
 }
 
+/* FIXME XXX oh no!!! we are going to average the channels for now XXX ignoring int channel*/
 uchar pixel_map(IplImage *img, CvPoint *p, int channel) {
 	/* XXX widthStep : size of an aligned image row, in bytes */
 	/* XXX nChannels : channel size to offset in bytes */
-	((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels]; 
+	return (uchar) ( ((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels] + 
+		     ((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels+1] + 
+			 ((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels+2] ) / 3;
 }
