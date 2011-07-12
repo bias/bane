@@ -100,4 +100,4 @@ That's it. We flushed the messages we recieved (at the shell process) and notice
 
 [gitsite]: github.com/bias/bane "github"
 [forestandtree]: http://upload.wikimedia.org/wikipedia/commons/4/47/Tapeten-a1.jpg "Tree tapestry" 
-[forestandtree]: http://upload.wikimedia.org/wikipedia/commons/2/21/Fig_retine.png "Retina image" 
+[retina]: http://upload.wikimedia.org/wikipedia/commons/2/21/Fig_retine.png "Retina image" 
