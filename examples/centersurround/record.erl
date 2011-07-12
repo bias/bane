@@ -29,7 +29,7 @@ cell(S) ->
 
 fire(S) when S#state.count >= S#state.thresh ->
 	%io:format("  bang ~w sent {~w, time} to ~w~n", [self(), S#state.trans, S#state.cpids]),
-	[ P ! {S#state.trans, time()} || P <- S#state.cpids ], S#state{count=0};
+	[ P ! {S#state.trans, time()} || P <- S#state.cpids ], S#state{count= S#state.count- S#state.thresh};
 fire(S) ->
-	%S#state{count = S#state.count, 0)}.
-	S.
+	% prevent infinite bottoming out
+	S#state{count = max(S#state.count, -10*S#state.thresh)}.

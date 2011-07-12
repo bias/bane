@@ -1,5 +1,6 @@
 -module(cs).
--export([test_simple/0, test_tonic/0, start_feedback/0, start_feedforward/0, monitor/1]).
+-export([test_simple/0, test_tonic/0, test_cs/2]).
+-export([start_feedback/3, start_feedforward/3, signal/1, harness/1]).
 -import(record, [start_cell/1, start_signal/1]).
 
 -include("record.hrl").
@@ -22,39 +23,69 @@ test_tonic() ->
 %%
 %% Center surround models using record based neurons 
 
-% horz. cell acts on receptors, nonlinear
-start_feedback() ->
-	% create bipolar cell
-	Pid_B = record:start_cell(#state{cpids=[self()], dynamics={tonic, 1}}),
-	% create horizontal cell (these dudes are weird)
-	Pid_H = record:start_cell(#state{trans={gaba, -1}}),
-	% create cones 
-	LPid_C = [ record:start_cell(#state{cpids=[Pid_B, Pid_H], dynamics={tonic, 6}}) | [ record:start_cell(#state{cpids=[Pid_H]}) || _X <- lists:seq(1,6) ]],
-	% connect cones to horz.
-	Pid_H ! {connect, LPid_C},
-	% create signals
-	_LPid_S = [ record:start_cell(#state{cpids=[lists:nth(X,LPid_C)], dynamics={tonic, 6}}) || X <- lists:seq(1,7) ].
-
 % horz. cell acts on bipolar, linear
-start_feedforward() ->
+start_feedforward(Gang, C, S) ->
 	% create bipolar cell
-	Pid_B = record:start_cell(#state{cpids=[self()], dynamics={tonic, 1}, freq=20, thresh=20}),
+	Pid_B = record:start_cell(#state{cpids=[Gang], dynamics={tonic, 1}, freq=400, thresh=40}),
 	% create horizontal cell (these dudes are weird)
-	Pid_H = record:start_cell(#state{cpids=[Pid_B], thresh=6, trans={excite, 1}}),
+	Pid_H = record:start_cell(#state{cpids=[Pid_B], thresh=6, trans={excite, 90}}),
 	% create cones 
 	LPid_C = [ 
-		record:start_cell(#state{cpids=[Pid_B], dynamics={tonic, 25.5}, freq=200, thresh=255, trans={inhib, -2}}) | 
+		record:start_cell(#state{cpids=[Pid_B], dynamics={tonic, 25.5}, freq=200, thresh=255, trans={inhib, -180}}) | 
 		[ record:start_cell(#state{cpids=[Pid_H], dynamics={tonic, 25.5}, freq=200, thresh=255, trans={excite, 1}}) || _X <- lists:seq(1,6) ]
 		],
 	% create signals
-	LPid_S = [ record:start_cell(#state{cpids=[lists:nth(X,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, -255}}) || X <- lists:seq(1,7) ],
-	spawn_link(?MODULE, monitor, [LPid_S]).
+	LPid_S = [
+		record:start_cell(#state{cpids=[lists:nth(1,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, C}}) | 
+		[ record:start_cell(#state{cpids=[lists:nth(X,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, S}}) || X <- lists:seq(2,7) ]
+		],
+	All = [ Pid_B | LPid_C ] ++ [ Pid_H | LPid_S ],
+	{Pid_B, Pid_H, LPid_C, LPid_S, All}.
 
-monitor([C|S]=CS) ->
+% horz. cell acts on receptors, nonlinear
+start_feedback(Gang, C, S) ->
+	% create bipolar cell
+	Pid_B = record:start_cell(#state{cpids=[Gang], dynamics={tonic, 1}, freq=400, thresh=10}),
+	% create horizontal cell (these dudes are weird)
+	Pid_H = record:start_cell(#state{thresh=6, trans={inhib, -127}}),
+	% create cones 
+	LPid_C = [ 
+		record:start_cell(#state{cpids=[Pid_B], dynamics={tonic, 25.5}, freq=200, thresh=127, trans={inhib, -30}}) | 
+		[ record:start_cell(#state{cpids=[Pid_H], dynamics={tonic, 25.5}, freq=200, thresh=127, trans={excite, 1}}) || _X <- lists:seq(1,6) ]
+		],
+	Pid_H ! {connect, LPid_C},
+	% create signals
+	LPid_S = [
+		record:start_cell(#state{cpids=[lists:nth(1,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, C}}) | 
+		[ record:start_cell(#state{cpids=[lists:nth(X,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, S}}) || X <- lists:seq(2,7) ]
+		],
+	All = [ Pid_B | LPid_C ] ++ [ Pid_H | LPid_S ],
+	{Pid_B, Pid_H, LPid_C, LPid_S, All}.
+
+test_cs_(F, C, S) -> 
+	Har = spawn_link(?MODULE, harness, [0]),
+	{_,_,_,_, All} = F(Har, C, S),
+	timer:send_after(5010, Har, {check, self()}),
+	receive 
+		Count -> io:format("Cen ~4w Sur ~4w :: ~4w per sec~n", [C, S, Count/5]) 
+	end,
+	[ P ! stop || P <- All ].
+
+test_cs(F,R) ->
+	[ test_cs_(F, C, S) || C <- R, S <- R ],
+	ok.
+
+signal([C|S]=CS) ->
 	receive 
 		{X,Y} -> 
 			C ! {trans, {inhib, X}}, 
 			[ P ! {trans, {inhib, Y}} || P <- S ], 
-			monitor(CS)
+			signal(CS);
+		stop -> ok
 	end.
 
+harness(Count) ->
+	receive
+		{{_Trans, Str}, _Time} -> harness(Count+Str);
+		{check, Pid} -> Pid ! Count
+	end.
