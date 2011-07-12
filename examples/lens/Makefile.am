@@ -1,13 +1,16 @@
 ## Non GNU complient  project
 AUTOMAKE_OPTIONS = foreign
 
-bin_PROGRAMS = webcam_lense visualize
+bin_PROGRAMS = webcam_lense visualize create
 
 webcam_lense_SOURCES = webcam_lense.c
 webcam_lense_LDADD = $(OPENCV_LIBS) -L$(ERLANG_LIB_DIR_erl_interface)/lib -lei -lerl_interface
 
 visualize_SOURCES = visualize.c
 visualize_LDADD = $(OPENCV_LIBS) -L$(ERLANG_LIB_DIR_erl_interface)/lib -lei -lerl_interface
+
+create_SOURCES = create.c
+create_LDADD = $(OPENCV_LIBS)
 
 INCLUDES = -I$(ERLANG_LIB_DIR_erl_interface)/include
 

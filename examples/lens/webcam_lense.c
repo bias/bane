@@ -72,19 +72,28 @@ int main(int argc, char **argv) {
 	#define CONN_NODENAME argv[6]
 	
 	/* FIXME this should really use getopt */
-	if ( argc != 7 ) {
-		fprintf(stderr, "Usage %s: self_addr self_hostname self_nodename cookie conn_addr conn_nodename", argv[0]);
+	if ( argc != 7 && argc != 8 ) {
+		fprintf(stderr, "Usage %s: self_addr self_hostname self_nodename cookie conn_addr conn_nodename [avi input]", argv[0]);
 		return 1;
 	}
 
 	/* ***** *** * OPENCV SETUP * *** ***** */ 
 
+	fprintf(stderr, "argc = %i\n", argc);
+
 	/* initialize camera */
-	capture = cvCaptureFromCAM( 0 );
+	if ( argc == 7 ) {
+		fprintf(stderr, "using camera\n");
+		capture = cvCaptureFromCAM( 0 );
+	}
+	else {
+		fprintf(stderr, "using file %s\n", argv[7]);
+		capture = cvCaptureFromAVI( argv[7] );
+	}
 
 	/* always check */
 	if ( !capture ) {
-		fprintf(stderr, "Cannot initialize webcam!\n" );
+		fprintf(stderr, "Cannot initialize input!\n" );
 		return 1;
 	}
 
@@ -173,6 +182,10 @@ int main(int argc, char **argv) {
 				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_stop") == 0 ) { loop = 0; }
 			}
 			erl_free_term(emsg.msg);
+			erl_free_term(ehead);
+			erl_free_term(earg);
+			erl_free_term(efam);
+			erl_free_term(egen);
 		}
 	}
 

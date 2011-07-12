@@ -32,8 +32,9 @@ void set_pixel(IplImage *, CvPoint *, int, uchar);
 int main(int argc, char **argv) {
 
 	/* ***** *** * OPENCV DEFINES * *** ***** */ 
-	CvCapture *capture;
+	CvVideoWriter *writer;
 	IplImage  *img;
+	int width, height;
 	int key = 0;
 	Hex hex;
 	CvPoint center;
@@ -73,23 +74,22 @@ int main(int argc, char **argv) {
 	#define CONN_NODENAME argv[6]
 	
 	/* FIXME this should really use getopt */
-	if ( argc != 7 ) {
-		fprintf(stderr, "Usage %s: self_addr self_hostname self_nodename cookie conn_addr conn_nodename", argv[0]);
+	if ( argc != 10 && argc != 11 ) {
+		fprintf(stderr, "Usage %s: self_addr self_hostname self_nodename cookie conn_addr conn_nodename width height time [avi output]", argv[0]);
 		return 1;
 	}
 
 	/* ***** *** * OPENCV SETUP * *** ***** */ 
 
-	if ( (img = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 3)) == NULL ) {
-		perror("create");
-		return 1;
-	}
-	center.x = 640/2;
-	center.y = 480/2;
-
-	/* create a window for the video */
+	width = atoi(argv[7]);
+	height = atoi(argv[8]);
+	img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
+	center.x = width/2;
+	center.y = height/2;
 	cvNamedWindow( argv[0], CV_WINDOW_AUTOSIZE );
 
+	if ( argc == 11 )
+		writer = cvCreateVideoWriter(argv[10], CV_FOURCC('P','I','M','1'), 25 /*fps*/, cvGetSize(img), 1);
 
 	/* ***** *** * ERLANG SETUP * *** ***** */ 
 
@@ -161,6 +161,10 @@ int main(int argc, char **argv) {
 				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_stop") == 0 ) { loop = 0; }
 			}
 			erl_free_term(emsg.msg);
+			erl_free_term(ehead);
+			erl_free_term(earg);
+			erl_free_term(efam);
+			erl_free_term(egen);
 		}
 	}
 
@@ -220,11 +224,15 @@ int main(int argc, char **argv) {
 
 	fprintf(stderr, "ready\n");
 	int str;
+	/*
 	loop = 1;
 	while (loop) {
+		*/
+	int nFrames = atoi(argv[9]);
+	for (i=0; i<nFrames; i++) {
 
-		i = 0;
-		while ( i <= graph_order ) {
+		j = 0;
+		while ( j <= graph_order ) {
 
 			got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
 
@@ -244,24 +252,30 @@ int main(int argc, char **argv) {
 						/*set_pixel(img, inv_map[ERL_PID_NUMBER(epid)-min_pid], 1, ERL_INT_VALUE(estr));*/
 						//fprintf(stderr, "got %i, offset to %i\n", ERL_PID_NUMBER(epid), ERL_PID_NUMBER(epid)-min_pid); 
 						cvCircle(img, *inv_map[ERL_PID_NUMBER(epid)-min_pid], 1, cvScalar(str,str,str,0), 1, 8, 0);
-						i++;
+						j++;
 					}
 				}
 				erl_free_term(emsg.msg);
+				erl_free_term(ehead);
+				erl_free_term(earg);
+				erl_free_term(epid);
+				erl_free_term(estr);
 			}
 		}
 
 		/* display and write current image */
-		/* cvWriteFrame(writer, img); */
 		cvShowImage(argv[0], img);
+		if ( argc == 11 )
+			cvWriteFrame(writer, img);
+		//cvSet(img, CV_RGB(0, 0, 0), 0);
 		
 		/* exit if user presses 'q' */
 		key = cvWaitKey(20);
 	}
 
 	/* free memory */
+	cvReleaseVideoWriter( &writer );
 	cvDestroyWindow( argv[0] );
-	cvReleaseCapture( &capture );
 
 	return 0;
 }
