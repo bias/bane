@@ -34,7 +34,6 @@ int main(int argc, char **argv) {
 	CvCapture *capture;
 	IplImage  *img;
 	int key = 0;
-	int channels = 3;
 	Hex hex;
 	CvPoint center;
 
@@ -63,7 +62,7 @@ int main(int argc, char **argv) {
 
 
 	/* ***** *** * GENERAL DEFINES * *** ***** */
-	int i,j,x,y;
+	int i,j;
 
 	#define SELF_ADDR argv[1]
 	#define SELF_HOSTNAME argv[2]
@@ -90,7 +89,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* create a window for the video */
-	cvNamedWindow( "result", CV_WINDOW_AUTOSIZE );
+	cvNamedWindow( argv[0], CV_WINDOW_AUTOSIZE );
 
 
 	/* check image for 3 channels, and get dimensions */
@@ -138,7 +137,7 @@ int main(int argc, char **argv) {
 		erl_err_quit("erl_connect");
 
 	for (i=0; i<256; i++)
-		photons[i] = erl_format((char*)"{photons,~i}", (uchar)i);
+		photons[i] = erl_format((char*)"{{pho,~i}, 0}", (uchar)i);
 
 	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
 		
@@ -201,6 +200,7 @@ int main(int argc, char **argv) {
 
 	/* ***** *** *	LOOP	* *** ***** */ 
 
+	fprintf(stderr, "ready\n");
 	loop = 1;
 
 	while ( loop  && key != 'q' ) {
@@ -212,7 +212,7 @@ int main(int argc, char **argv) {
 			break;
 
 		/* display current image */
-		cvShowImage("result", img);
+		cvShowImage(argv[0], img);
 		
 		/* center of retina */
 		erl_send(fd, mother, photons[pixel_map(img, &center, 1)]);
@@ -225,7 +225,7 @@ int main(int argc, char **argv) {
 	}
 
 	/* free memory */
-	cvDestroyWindow( "result" );
+	cvDestroyWindow( argv[0] );
 	cvReleaseCapture( &capture );
 
 	return 0;
@@ -247,7 +247,7 @@ int spiral_hex_map(CvPoint *map[], int size, Hex *hex, int count) {
 		return 0;	
 }
 
-/* FIXME XXX oh no!!! we are going to average the channels for now XXX ignoring int channel*/
+/* FIXME XXX oh no!!! we are going to average the channels for now XXX ignoring int channel !!! */
 uchar pixel_map(IplImage *img, CvPoint *p, int channel) {
 	/* XXX widthStep : size of an aligned image row, in bytes */
 	/* XXX nChannels : channel size to offset in bytes */

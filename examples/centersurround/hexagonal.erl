@@ -65,6 +65,9 @@ cell(Nbh, PN, PNOP=null, P=0, N, Family, Gen) ->
 		{nbhq, PID} ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX temporary hack to pass along image
+		{{pho,Str}, 0} ->
+			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		stop -> ok
 	end;
 
@@ -82,6 +85,9 @@ cell(Nbh, PN, PNOP=null, P=1, N, Family, Gen) ->
 		{nbhq, PID} ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX temporary hack to pass along image
+		{{pho,Str}, 0} ->
+			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		stop -> ok
 	end;
 
@@ -100,6 +106,9 @@ cell(Nbh, PN=null, PNOP, P, N, Family, Gen) ->
 		{nbhq, PID} ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX temporary hack to pass along image
+		{{pho,Str}, 0} ->
+			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		stop -> ok
 	end;
 
@@ -119,6 +128,9 @@ cell(Nbh, PN, PNOP, P, N, Family, Gen) ->
 		{nbhq, PID} ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, CPID, Family, Gen);
+		% XXX temporary hack to pass along image
+		{{pho,Str}, 0} ->
+			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		stop -> ok
 	end.
 
@@ -132,6 +144,9 @@ neuron(Nbh, PN, PNOP, P, CPID, Family, Gen) ->
 		{nbhq, PID} ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, CPID, Family, Gen);
+		% XXX temporary hack to pass along image
+		{{pho,Str}, 0} ->
+			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		stop -> ok
 	end.
 
