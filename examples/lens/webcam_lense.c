@@ -77,9 +77,9 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
-	/* ***** *** * OPENCV SETUP * *** ***** */ 
 
-	fprintf(stderr, "argc = %i\n", argc);
+	/* ***** *** * OPENCV SETUP * *** ***** */ 
+	fprintf(stderr, "--> opencv init\n");
 
 	/* initialize camera */
 	if ( argc == 7 ) {
@@ -100,7 +100,6 @@ int main(int argc, char **argv) {
 	/* create a window for the video */
 	cvNamedWindow( argv[0], CV_WINDOW_AUTOSIZE );
 
-
 	/* check image for 3 channels, and get dimensions */
 	if( !(img = cvQueryFrame( capture )) ) {
 		fprintf(stderr, "Expected 3 channel camera");
@@ -118,6 +117,7 @@ int main(int argc, char **argv) {
 
 
 	/* ***** *** * ERLANG SETUP * *** ***** */ 
+	fprintf(stderr, "--> erlang init\n");
 
 	/* Configure cnode (self) */
 	strcpy(self_addr = malloc(strlen(SELF_ADDR)+1), SELF_ADDR);
@@ -146,10 +146,12 @@ int main(int argc, char **argv) {
 		erl_err_quit("erl_connect");
 
 	for (i=0; i<256; i++)
-		photons[i] = erl_format((char*)"{{pho,~i}, 0}", (uchar)i);
+		photons[i] = erl_format((char*)"{t, {pho,~i}, null}", (uchar)i);
+
 
 	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
-		
+	fprintf(stderr, "--> family list\n");
+
 	erequest= erl_format((char*)"{p_q, {any, ~a}}", self_fullname);
 	erl_reg_send(fd, "father", erequest);
 	erl_free_term(erequest);
@@ -182,15 +184,12 @@ int main(int argc, char **argv) {
 				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_stop") == 0 ) { loop = 0; }
 			}
 			erl_free_term(emsg.msg);
-			erl_free_term(ehead);
-			erl_free_term(earg);
-			erl_free_term(efam);
-			erl_free_term(egen);
 		}
 	}
 
-
 	/* XXX create map from 6 by n array to pixels (square and hexagon map) */
+	fprintf(stderr, "--> map\n");
+
 	int family_order = (graph_order-1)/6;
 	CvPoint **map[6];
 	for (i=0; i<6; i++) {
@@ -212,10 +211,9 @@ int main(int argc, char **argv) {
 
 
 	/* ***** *** *	LOOP	* *** ***** */ 
+	fprintf(stderr, "--> ready\n");
 
-	fprintf(stderr, "ready\n");
 	loop = 1;
-
 	while ( loop  && key != 'q' ) {
 
 		/* TODO calculate framerate */
@@ -234,10 +232,11 @@ int main(int argc, char **argv) {
 				erl_send(fd, families[i][j], photons[pixel_map(img, map[i][j], 1)]);
 
 		/* exit if user presses 'q' */
-		key = cvWaitKey( 1 );
+		key = cvWaitKey(20);
 	}
 
 	/* free memory */
+	fprintf(stderr, "--> exiting\n");
 	cvDestroyWindow( argv[0] );
 	cvReleaseCapture( &capture );
 

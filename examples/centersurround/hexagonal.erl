@@ -1,7 +1,12 @@
 -module(hexagonal).
+
 -export([start/1, stop/0, info/0]).
--export([father/2, mother_cell/1, cell/7]).
--vsn(0.2).
+-export([father/2, uncle/1, mother_cell/1, cell/7]).
+
+-import(record, [cell/1]).
+-include("record.hrl").
+
+-vsn(0.3).
 
 %%
 %% Client interface
@@ -12,6 +17,8 @@ start(N) ->
 	register(mother, MPid),
 	FPid = spawn_link(?MODULE, father, [[{MPid,0,0}], N]),
 	register(father, FPid),
+	UPid = spawn_link(?MODULE, uncle, [[]]),
+	register(uncle, UPid),
 	{MPid, FPid}.
 
 stop() -> nope.
@@ -42,7 +49,21 @@ father(FamilyList, N) ->
 		{asize_q, RPid} -> 
 			RPid ! {asize_r, length(FamilyList)}, 
 			father(FamilyList, N);
+		{morph, feedforward} ->
+			[ P ! {morph, feedforward} || {P,_,_} <- FamilyList ],
+			father(FamilyList, N);
 		stop -> ok
+	end.
+
+uncle(FamilyList) ->
+	receive
+		{p_d, Pdatatup} -> 
+			uncle([Pdatatup|FamilyList]);
+		{p_q, RPid} -> 
+			RPid ! {p_r_start, length(FamilyList)},
+			[ RPid ! {p_r, Pdatatup} || Pdatatup <- FamilyList ],
+			RPid ! {p_r_stop},
+			uncle(FamilyList)
 	end.
 
 mother_cell(N) -> 
@@ -66,8 +87,16 @@ cell(Nbh, PN, PNOP=null, P=0, N, Family, Gen) ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		% XXX temporary hack to pass along image
-		{{pho,Str}, 0} ->
-			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		{t, {pho,Str}, _} ->
+			{any, 'visualize@127.0.0.1'} ! {t, {pho, Str}, self()}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX XXX seriously XXX XXX this is getting to be an absurd kludge
+		{morph, feedforward} ->
+			E = #exemplar{},
+			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
+			uncle ! {p_d, {B, Family, Gen}},
+			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
+			[ N ! {connect, [H]} || N <- Nbh],
+			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
 
@@ -86,8 +115,16 @@ cell(Nbh, PN, PNOP=null, P=1, N, Family, Gen) ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		% XXX temporary hack to pass along image
-		{{pho,Str}, 0} ->
-			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		{t, {pho, Str}, _} ->
+			{any, 'visualize@127.0.0.1'} ! {t, {pho, Str}, self()}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX XXX seriously XXX XXX this is getting to be an absurd kludge
+		{morph, feedforward} ->
+			E = #exemplar{},
+			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
+			uncle ! {p_d, {B, Family, Gen}},
+			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
+			[ N ! {connect, [H]} || N <- Nbh],
+			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
 
@@ -107,8 +144,16 @@ cell(Nbh, PN=null, PNOP, P, N, Family, Gen) ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, null, Family, Gen);
 		% XXX temporary hack to pass along image
-		{{pho,Str}, 0} ->
-			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		{t, {pho, Str}, _} ->
+			{any, 'visualize@127.0.0.1'} ! {t, {pho, Str}, self()}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX XXX seriously XXX XXX this is getting to be an absurd kludge
+		{morph, feedforward} ->
+			E = #exemplar{},
+			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
+			uncle ! {p_d, {B, Family, Gen}},
+			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
+			[ N ! {connect, [H]} || N <- Nbh],
+			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
 
@@ -129,8 +174,16 @@ cell(Nbh, PN, PNOP, P, N, Family, Gen) ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, CPID, Family, Gen);
 		% XXX temporary hack to pass along image
-		{{pho,Str}, 0} ->
-			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		{t, {pho, Str}, _} ->
+			{any, 'visualize@127.0.0.1'} ! {t, {pho, Str}, self()}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX XXX seriously XXX XXX this is getting to be an absurd kludge
+		{morph, feedforward} ->
+			E = #exemplar{},
+			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
+			uncle ! {p_d, {B, Family, Gen}},
+			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
+			[ N ! {connect, [H]} || N <- Nbh],
+			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end.
 
@@ -145,8 +198,16 @@ neuron(Nbh, PN, PNOP, P, CPID, Family, Gen) ->
 			PID ! {nbhr, self(), Nbh},
 			neuron(Nbh, PN, PNOP, P, CPID, Family, Gen);
 		% XXX temporary hack to pass along image
-		{{pho,Str}, 0} ->
-			{any, 'visualize@127.0.0.1'} ! {pho, {Str,self()}}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		{t, {pho, Str}, _} ->
+			{any, 'visualize@127.0.0.1'} ! {t, {pho, Str}, self()}, neuron(Nbh, PN, PNOP, P, null, Family, Gen);
+		% XXX XXX seriously XXX XXX this is getting to be an absurd kludge
+		{morph, feedforward} ->
+			E = #exemplar{},
+			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
+			uncle ! {p_d, {B, Family, Gen}},
+			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
+			[ N ! {connect, [H]} || N <- Nbh],
+			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end.
 

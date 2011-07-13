@@ -1,8 +1,9 @@
 -module(cs).
+
 -export([test_simple/0, test_tonic/0, test_cs/2]).
 -export([start_feedback/3, start_feedforward/3, signal/1, harness/1]).
--import(record, [start_cell/1, start_signal/1]).
 
+-import(record, [cell/1]).
 -include("record.hrl").
 
 %%
@@ -25,20 +26,15 @@ test_tonic() ->
 
 % horz. cell acts on bipolar, linear
 start_feedforward(Gang, C, S) ->
+	E=#exemplar{},
 	% create bipolar cell
-	Pid_B = record:start_cell(#state{cpids=[Gang], dynamics={tonic, 1}, freq=400, thresh=40}),
+	Pid_B = record:start_cell((E#exemplar.bi)#state{cpids=[Gang]}),
 	% create horizontal cell (these dudes are weird)
-	Pid_H = record:start_cell(#state{cpids=[Pid_B], thresh=6, trans={excite, 90}}),
+	Pid_H = record:start_cell((E#exemplar.horz)#state{cpids=[Pid_B]}),
 	% create cones 
-	LPid_C = [ 
-		record:start_cell(#state{cpids=[Pid_B], dynamics={tonic, 25.5}, freq=200, thresh=255, trans={inhib, -180}}) | 
-		[ record:start_cell(#state{cpids=[Pid_H], dynamics={tonic, 25.5}, freq=200, thresh=255, trans={excite, 1}}) || _X <- lists:seq(1,6) ]
-		],
+	LPid_C = [ record:start_cell((E#exemplar.cone)#state{cpids=[Pid_B]}) | [ record:start_cell((E#exemplar.cone)#state{cpids=[Pid_H]}) || _X <- lists:seq(1,6) ] ],
 	% create signals
-	LPid_S = [
-		record:start_cell(#state{cpids=[lists:nth(1,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, C}}) | 
-		[ record:start_cell(#state{cpids=[lists:nth(X,LPid_C)], dynamics={tonic, 1}, freq=20, thresh=1, trans={inhib, S}}) || X <- lists:seq(2,7) ]
-		],
+	LPid_S = [ record:start_cell((E#exemplar.sig)#state{cpids=[lists:nth(1,LPid_C)], trans={inhib, C}}) | [ record:start_cell((E#exemplar.sig)#state{cpids=[lists:nth(X,LPid_C)], trans={inhib, S}}) || X <- lists:seq(2,7) ] ],
 	All = [ Pid_B | LPid_C ] ++ [ Pid_H | LPid_S ],
 	{Pid_B, Pid_H, LPid_C, LPid_S, All}.
 
@@ -86,6 +82,6 @@ signal([C|S]=CS) ->
 
 harness(Count) ->
 	receive
-		{{_Trans, Str}, _Time} -> harness(Count+Str);
+		{t, {_Trans, Str}, _Pid} -> harness(Count+Str);
 		{check, Pid} -> Pid ! Count
 	end.

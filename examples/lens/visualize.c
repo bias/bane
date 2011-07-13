@@ -17,6 +17,7 @@
 
 
 #define PI 3.1415926535
+#define max( a, b ) ( ((a) > (b)) ? (a) : (b) )
 
 typedef struct Hex {
 	double x;
@@ -28,14 +29,14 @@ typedef struct Hex {
 int spiral_hex_map(CvPoint *[], int, Hex *, int count);
 uchar pixel_map(IplImage *, CvPoint *, int);
 void set_pixel(IplImage *, CvPoint *, int, uchar);
+void fire(int *);
 
 int main(int argc, char **argv) {
 
 	/* ***** *** * OPENCV DEFINES * *** ***** */ 
 	CvVideoWriter *writer;
 	IplImage  *img;
-	int width, height;
-	int key = 0;
+	int width, height, nFrames, key;
 	Hex hex;
 	CvPoint center;
 
@@ -59,12 +60,12 @@ int main(int argc, char **argv) {
 
 	ErlMessage emsg;                         /* Incoming message */
 	ETERM *erequest, *earg, *ehead, *egraph_order, *epid, *efam, *egen, *estr;
-	ETERM **families[6], *mother, *photons[256]; 
-	int graph_order = 0;
+	ETERM **families[6], *mother; 
+	int graph_order = 0, str;
 
 
 	/* ***** *** * GENERAL DEFINES * *** ***** */
-	int i,j;
+	int i,j,k;
 
 	#define SELF_ADDR argv[1]
 	#define SELF_HOSTNAME argv[2]
@@ -79,19 +80,25 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 
+
 	/* ***** *** * OPENCV SETUP * *** ***** */ 
+	fprintf(stderr, "--> opencv init\n");
 
 	width = atoi(argv[7]);
 	height = atoi(argv[8]);
 	img = cvCreateImage(cvSize(width, height), IPL_DEPTH_8U, 3);
-	center.x = width/2;
-	center.y = height/2;
+	center.x = (int)width/2;
+	center.y = (int)height/2;
+
 	cvNamedWindow( argv[0], CV_WINDOW_AUTOSIZE );
 
+	nFrames = atoi( argv[9] );
+
 	if ( argc == 11 )
-		writer = cvCreateVideoWriter(argv[10], CV_FOURCC('P','I','M','1'), 25 /*fps*/, cvGetSize(img), 1);
+		writer = cvCreateVideoWriter(argv[10], CV_FOURCC('P','I','M','1'), 20 /*fps*/, cvGetSize(img), 1);
 
 	/* ***** *** * ERLANG SETUP * *** ***** */ 
+	fprintf(stderr, "--> erlang init\n");
 
 	/* Configure cnode (self) */
 	strcpy(self_addr = malloc(strlen(SELF_ADDR)+1), SELF_ADDR);
@@ -123,13 +130,14 @@ int main(int argc, char **argv) {
 		erl_err_quit("erl_xconnect");
 	}
 
-	for (i=0; i<256; i++)
-		photons[i] = erl_format((char*)"{{pho,~i}, 0}", (uchar)i);
-
 	/* ***** *** * GRAB FAMILY LISTS * *** ***** */
-		
+	fprintf(stderr, "--> family list\n");
+
 	erequest= erl_format((char*)"{p_q, {any, ~a}}", self_fullname);
-	erl_reg_send(fd, "father", erequest);
+	if ( argc == 11)
+		erl_reg_send(fd, "uncle", erequest);
+	else
+		erl_reg_send(fd, "father", erequest);
 	erl_free_term(erequest);
 
 	while (loop) {
@@ -161,15 +169,19 @@ int main(int argc, char **argv) {
 				if ( strcmp(ERL_ATOM_PTR(ehead), "p_r_stop") == 0 ) { loop = 0; }
 			}
 			erl_free_term(emsg.msg);
+			/*
 			erl_free_term(ehead);
 			erl_free_term(earg);
 			erl_free_term(efam);
 			erl_free_term(egen);
+			*/
 		}
 	}
 
 
 	/* XXX create map from 6 by n array to pixels (square and hexagon map) */
+	fprintf(stderr, "--> map\n");
+
 	int family_order = (graph_order-1)/6;
 	CvPoint **map[6];
 	for (i=0; i<6; i++) {
@@ -190,23 +202,38 @@ int main(int argc, char **argv) {
 	}
 
 	/* XXX create inverse map */
+	fprintf(stderr, "--> inverse map\n");
 
-	int temp_pid, min_pid = ERL_PID_NUMBER(mother), max_pid = 0;
+	int temp_pid, min_pid = ERL_PID_NUMBER(mother), max_pid = 0, inv_size;
 	CvPoint **inv_map;
 
 	/* search for max pid, pids may not be contigous */
 	for (i=0; i<6; i++)
-		for (j=0; j<family_order; j++)
-			if ( (temp_pid = ERL_PID_NUMBER(families[i][j])) > max_pid )
+		for (j=0; j<family_order; j++) {
+			temp_pid = ERL_PID_NUMBER(families[i][j]);
+			if ( temp_pid > max_pid )
 				max_pid = temp_pid;
+			if ( temp_pid < min_pid ) 
+				min_pid = temp_pid;
+		}
+
+	/* check mother too */
+	temp_pid = ERL_PID_NUMBER(mother);
+	if ( temp_pid > max_pid )
+		max_pid = temp_pid;
+	if ( temp_pid < min_pid ) 
+		min_pid = temp_pid;
 	
-	inv_map = malloc( (max_pid-min_pid+1) * sizeof(CvPoint*) );
-	for (i=0; i<max_pid-min_pid+1; i++)
+	inv_size = max_pid-min_pid+1;
+	inv_map = malloc( inv_size * sizeof(CvPoint*) );
+	for (i=0; i<inv_size; i++)
 		inv_map[i] = malloc( sizeof(struct CvPoint) );
 
 	inv_map[0]->x = center.x;
 	inv_map[0]->y = center.y;
 
+	inv_map[ERL_PID_NUMBER(mother)-min_pid]->x = center.x;  
+	inv_map[ERL_PID_NUMBER(mother)-min_pid]->y = center.y;  
 	for (i=0; i<6; i++)
 		for (j=0; j<family_order; j++) {
 			//inv_map[ERL_PID_NUMBER(families[i][j])-min_pid] = malloc( sizeof(struct CvPoint) );
@@ -214,66 +241,71 @@ int main(int argc, char **argv) {
 			inv_map[ERL_PID_NUMBER(families[i][j])-min_pid]->y = map[i][j]->y;  
 		}
 
-	/*
-	for (i=0; i<max_pid-min_pid+1; i++)
-		fprintf(stderr, "inv_map %i -> %i, %i\n", i, inv_map[i]->x, inv_map[i]->y);
-		*/
-
+	/* XXX create count map */
+	uchar *count_map;
+	count_map = malloc( inv_size * sizeof(int) );
+	for (i=0; i<inv_size; i++)
+		count_map[i] = 0;
 	
 	/* ***** *** *	LOOP	* *** ***** */ 
+	fprintf(stderr, "--> ready\n");
 
-	fprintf(stderr, "ready\n");
-	int str;
-	/*
-	loop = 1;
-	while (loop) {
-		*/
-	int nFrames = atoi(argv[9]);
-	for (i=0; i<nFrames; i++) {
+	if ( argc != 11 )
+		cvSet(img, CV_RGB(255, 255, 255), 0);
+
+	//for (i=0; i<nFrames && key != 'q'; i++) {
+	i=0;
+	while ( i < nFrames && key != 'q') {
 
 		j = 0;
-		while ( j <= graph_order ) {
-
+		while ( j <= graph_order /* XXX arbitrary */ ) {
 			got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
-
 			if (got == ERL_TICK) { /* nothing */ } 
-
 			else if (got == ERL_ERROR) { return 1; } 
-
 			else {
 				if (emsg.type == ERL_REG_SEND) {
-					/* {pho, {Str, Pid}} */
+
+					/* {t, {Trans, Str}, Pid} */
 					ehead = erl_element(1, emsg.msg);
-					if ( strcmp(ERL_ATOM_PTR(ehead), "pho") == 0 ) {
-						earg = erl_element(2, emsg.msg);
-						estr = erl_element(1, earg);
-						epid = erl_element(2, earg);
+					if ( strcmp(ERL_ATOM_PTR(ehead), "t") == 0 ) {
+						estr = erl_element(2, erl_element(2, emsg.msg));
+						epid = erl_element(3, emsg.msg);
 						str = ERL_INT_VALUE(estr);
-						/*set_pixel(img, inv_map[ERL_PID_NUMBER(epid)-min_pid], 1, ERL_INT_VALUE(estr));*/
-						//fprintf(stderr, "got %i, offset to %i\n", ERL_PID_NUMBER(epid), ERL_PID_NUMBER(epid)-min_pid); 
-						cvCircle(img, *inv_map[ERL_PID_NUMBER(epid)-min_pid], 1, cvScalar(str,str,str,0), 1, 8, 0);
+						if ( argc == 11 )
+							count_map[ERL_PID_NUMBER(epid)-min_pid] += 10*str;
+						else
+							cvCircle(img, *inv_map[ERL_PID_NUMBER(epid)-min_pid], 1, cvScalar(str,str,str,0), 1, 8, 0);
 						j++;
 					}
+
 				}
 				erl_free_term(emsg.msg);
-				erl_free_term(ehead);
-				erl_free_term(earg);
-				erl_free_term(epid);
-				erl_free_term(estr);
 			}
 		}
 
+		uchar temp;
+		if ( argc == 11)
+			for (k=0; k<inv_size; k++) {
+				if ( (temp = count_map[k]) > 0 )
+					cvCircle(img, *inv_map[k], 1, cvScalar(temp,temp,temp,0), 1, 8, 0);
+				count_map[k] = max(count_map[k] - 10, 0);
+			}
+						
 		/* display and write current image */
 		cvShowImage(argv[0], img);
 		if ( argc == 11 )
 			cvWriteFrame(writer, img);
-		//cvSet(img, CV_RGB(0, 0, 0), 0);
 		
 		/* exit if user presses 'q' */
-		key = cvWaitKey(20);
+		if ( argc == 11 )
+			key = cvWaitKey(1);
+		else
+			key = cvWaitKey(20);
+		i++;
 	}
 
 	/* free memory */
+	fprintf(stderr, "--> exiting\n");
 	cvReleaseVideoWriter( &writer );
 	cvDestroyWindow( argv[0] );
 
@@ -308,3 +340,5 @@ uchar pixel_map(IplImage *img, CvPoint *p, int channel) {
 void set_pixel(IplImage *img, CvPoint *p, int channel, uchar value) {
 	(uchar) ((uchar*)(img->imageData + p->y*img->widthStep))[p->x*img->nChannels] = value;
 }
+
+void fire(int *count_map) { }
