@@ -1,8 +1,8 @@
 #!/usr/bin/env escript
-%%! -smp enable debug verbose
+%% -*- erlang -*-
+%%! -smp enable -name retina@127.0.0.1
 
--import(sky).
--import(sim).
+-import(cs).
 
 main(_Args) ->
 	[ [ trial(100,K,Kp) || K <- lists:seq(Kp,100,10) ] || Kp <- lists:seq(10,100,10) ],
