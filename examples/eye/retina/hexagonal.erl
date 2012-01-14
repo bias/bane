@@ -1,6 +1,6 @@
 -module(hexagonal).
 
--export([start/1, stop/0, info/0]).
+-export([start/1, stop/0, info/0, morph/0]).
 -export([father/2, uncle/1, mother_cell/1, cell/7]).
 
 -import(record, [cell/1]).
@@ -29,6 +29,9 @@ info() ->
 		{size_r, ActualSize, Size} -> ok
 	end,
 	{ActualSize, Size}.
+
+morph() ->
+	father ! {morph, feedforward}.
 
 %%
 %% Backend 

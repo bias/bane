@@ -1,0 +1,18 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -smp enable -name retina@127.0.0.1
+
+-import(hexagonal).
+
+main(_Args) ->
+	hexagonal:start(5),
+	timer:sleep(600),
+	{S,A} = hexagonal:info(),
+	io:format("Size: predicted ~w, actual ~w~n", [S, A]),
+	%hexagonal:morph(),
+	loop().
+
+loop() ->
+	receive
+		stop -> ok
+	end.

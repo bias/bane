@@ -1,0 +1,3 @@
+aclocal -I /usr/local/share/aclocal
+autoconf
+automake --add-missing 
