@@ -1,8 +1,0 @@
-#!/bin/bash
-
-# XXX Erlang script PATH is annoying to deal with, so CD
-cd retina
-./run
-cd -
-
-

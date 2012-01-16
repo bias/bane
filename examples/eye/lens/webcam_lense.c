@@ -110,7 +110,7 @@ int main(int argc, char **argv) {
 		return 1;
 	} 
 	else {
-		fprintf(stdout, "image h,w: %i, %i\n", img->height, img->width);
+		fprintf(stdout, "Camera image h,w: %i, %i\n", img->height, img->width);
 		center.x = round(img->width/2);
 		center.y = round(img->height/2);
 	}

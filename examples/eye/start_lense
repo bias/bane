@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# lense parameters
+SELF_ADDR=127.0.0.1
+SELF_HOST=$(hostname)
+SELF_NODE=lense
+
+# retina parameters (can't pass node name to escript, so be carefull)
+CONN_ADDR=127.0.0.1
+CONN_NODE=retina
+
+COOKIE=cookie
+
+echo Starting lens in background
+lens/webcam_lense $SELF_ADDR $SELF_HOST $SELF_NODE $COOKIE $CONN_ADDR $CONN_NODE

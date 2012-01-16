@@ -1,6 +1,6 @@
 #!/usr/bin/env escript
 %% -*- erlang -*-
-%%! -smp enable -name retina@127.0.0.1
+%%! -name retina@127.0.0.1 -setcookie cookie
 
 -import(hexagonal).
 

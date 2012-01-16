@@ -1,0 +1,7 @@
+#!/bin/bash
+
+echo Starting retina in background
+# XXX Erlang script PATH is annoying to deal with, so CD to directory
+cd retina
+./run
+cd -
