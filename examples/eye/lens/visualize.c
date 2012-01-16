@@ -253,10 +253,13 @@ int main(int argc, char **argv) {
 	if ( argc != 11 )
 		cvSet(img, CV_RGB(255, 255, 255), 0);
 
+	fprintf(stderr, "--> getting %i frames\n", nFrames);
 	//for (i=0; i<nFrames && key != 'q'; i++) {
 	i=0;
-	while ( i < nFrames && key != 'q') {
+	//while ( i < nFrames && key != 'q') {
+	while ( i < nFrames ) {
 
+		fprintf(stderr, "frame: ");
 		j = 0;
 		while ( j <= graph_order /* XXX arbitrary */ ) {
 			got = erl_receive_msg(fd, buf, BUFSIZ, &emsg);
@@ -297,11 +300,14 @@ int main(int argc, char **argv) {
 			cvWriteFrame(writer, img);
 		
 		/* exit if user presses 'q' */
+		/*
 		if ( argc == 11 )
 			key = cvWaitKey(1);
 		else
 			key = cvWaitKey(20);
+		*/
 		i++;
+		fprintf(stderr, "\n"); /* done with frame */
 	}
 
 	/* free memory */

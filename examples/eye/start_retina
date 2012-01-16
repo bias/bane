@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo Killing epmd \(since it goofs up node names across restarts\)
+sudo killall epmd
+
 echo Starting retina in background
 # XXX Erlang script PATH is annoying to deal with, so CD to directory
 cd retina
