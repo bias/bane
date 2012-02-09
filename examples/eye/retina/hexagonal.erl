@@ -3,7 +3,7 @@
 -export([start/1, stop/0, info/0, morph/0]).
 -export([father/2, uncle/1, mother_cell/1, cell/7]).
 
--import(record, [cell/1]).
+-import(record, [cell/1, start_cell/1]).
 -include("record.hrl").
 
 -vsn(0.3).
@@ -98,7 +98,7 @@ cell(Nbh, PN, PNOP=null, P=0, N, Family, Gen) ->
 			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
 			uncle ! {p_d, {B, Family, Gen}},
 			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
-			[ N ! {connect, [H]} || N <- Nbh],
+			[ Nh ! {connect, [H]} || Nh <- Nbh],
 			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
@@ -126,7 +126,7 @@ cell(Nbh, PN, PNOP=null, P=1, N, Family, Gen) ->
 			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
 			uncle ! {p_d, {B, Family, Gen}},
 			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
-			[ N ! {connect, [H]} || N <- Nbh],
+			[ Nh ! {connect, [H]} || Nh <- Nbh],
 			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
@@ -155,7 +155,7 @@ cell(Nbh, PN=null, PNOP, P, N, Family, Gen) ->
 			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
 			uncle ! {p_d, {B, Family, Gen}},
 			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
-			[ N ! {connect, [H]} || N <- Nbh],
+			[ Nh ! {connect, [H]} || Nh <- Nbh],
 			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end;
@@ -185,7 +185,7 @@ cell(Nbh, PN, PNOP, P, N, Family, Gen) ->
 			B = record:start_cell((E#exemplar.bi)#state{cpids=[{any, 'visualize@127.0.0.1'}]}),
 			uncle ! {p_d, {B, Family, Gen}},
 			H = record:start_cell((E#exemplar.horz)#state{cpids=[B]}),
-			[ N ! {connect, [H]} || N <- Nbh],
+			[ Nh ! {connect, [H]} || Nh <- Nbh],
 			record:cell((E#exemplar.cone)#state{cpids=[B]});
 		stop -> ok
 	end.

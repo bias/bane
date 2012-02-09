@@ -12,7 +12,7 @@ start_cell(S = #state{dynamics = {tonic, X}}) ->
 
 cell(S) ->
 	receive
-		Trans={t, {_InTrans, InStr}, _Pid} -> 
+		_Trans={t, {_InTrans, InStr}, _Pid} -> 
 			%io:format("~w got ~w with count ~w~n", [self(), Trans, S#state.count]),
 			cell(fire(S#state{count = S#state.count + S#state.coef * InStr}));
 		{connect, Pids} -> 
