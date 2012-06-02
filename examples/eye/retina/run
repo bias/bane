@@ -8,7 +8,7 @@ main(_Args) ->
 	hexagonal:start(25),
 	% 2 seconds to get info
 	timer:sleep(1200), 
-	{S,A} = hexagonal:info(),
+	{A,S} = hexagonal:info(),
 	io:format("Size: predicted ~w, actual ~w~n", [S, A]),
 	% 3 seconds to start visualizer
 	timer:sleep(1800),
