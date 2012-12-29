@@ -17,13 +17,10 @@
 start(N) ->
 	MPid = spawn_link(?MODULE, mother_cell, [trunc(N*(N-1)/2)]),
 	register(mother, MPid),
-	FPid = spawn_link(?MODULE, father, [[{MPid,0,0}], N]),
-	register(father, FPid),
-	UPid = spawn_link(?MODULE, uncle, [[]]),
-	register(uncle, UPid),
-	APid = spawn_link(?MODULE, aunt, [[], 0]),
-	register(aunt, APid),
-	{MPid, FPid}.
+	register(father, spawn_link(?MODULE, father, [[{MPid,0,0}], N])),
+	register(uncle, spawn_link(?MODULE, uncle, [[]])),
+	register(aunt, spawn_link(?MODULE, aunt, [[], 0])),
+	ok.
 
 stop() -> nope.
 	
@@ -122,8 +119,6 @@ uncle(FamilyList) ->
 %	Gen			family generation (distance along branch)
 
 % Message command prefixes:
-%
-%	Cells
 %				you have ...
 %	pf			been preferred
 %	pr			a preference number reply
@@ -303,5 +298,5 @@ merge([Head|Tail], L2) ->
 
 % Multiplicative
 ring(0, N) -> N;
-ring(N+1, N) -> 1;
-ring(X, N) -> X.
+ring(M, N) when M == N+1 -> 1;
+ring(X, _N) -> X.

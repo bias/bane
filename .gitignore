@@ -4,6 +4,10 @@
 erl_crash.dump
 
 #
+# generated database files
+*.txt
+
+#
 # Randoms
 *.log
 
